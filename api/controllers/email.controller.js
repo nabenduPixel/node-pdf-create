@@ -30,12 +30,12 @@ class Email {
     // }
 
     async sendEmail(req, res) {
-        const templatePath = path.join(__dirname, '../views/emailTemplate.ejs');
+        const templatePath = path.resolve(__dirname, '../views/emailTemplate.ejs');
         // Generate a dynamic filename using timestamp
         const filename = `email_${Date.now()}.pdf`;
-        const outputPath = path.join(__dirname, '../storage', filename); // Save in the public folder
+        const storageDir = path.resolve(__dirname, '../storage'); // Use absolute path
+        const outputPath = path.join(storageDir, filename); // Save in the storage folder
         try {
-            const storageDir = path.join(__dirname, '../storage');
             if (!fsSync.existsSync(storageDir)) {
                 fsSync.mkdirSync(storageDir, { recursive: true });
             }
