@@ -3,6 +3,7 @@ const path = require("path");
 const chromium = require("@sparticuz/chromium");
 const puppeteer = require("puppeteer-core");
 let ejs = require("ejs");
+const fsSync = require("fs");
 
 class Email {
     // async sendEmail(req,res) {
@@ -35,6 +36,10 @@ class Email {
         const outputPath = path.join(__dirname, '../public', filename); // Save in the public folder
 
         try {
+            const publicDir = path.join(__dirname, '../public');
+            if (!fsSync.existsSync(publicDir)) {
+                fsSync.mkdirSync(publicDir, { recursive: true });
+            }
             // Render the EJS template
             const html = await ejs.renderFile(templatePath);
 
@@ -63,11 +68,7 @@ class Email {
 
             // Send the PDF buffer as a response
             res.json({ message: 'PDF generated successfully', path: `/public/${filename}` });
-            // res.set({
-            //     'Content-Type': 'application/pdf',
-            //     'Content-Disposition': 'attachment; filename=email.pdf',
-            // });
-            // res.send(pdfBuffer);
+            
 
         } catch (error) {
             console.error('Error generating PDF:', error);
