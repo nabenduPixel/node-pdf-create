@@ -1,4 +1,4 @@
-const fs = require("fs");
+const fs = require("fs").promises;
 const path = require("path");
 const chromium = require("@sparticuz/chromium");
 const puppeteer = require("puppeteer-core");
@@ -30,6 +30,9 @@ class Email {
 
     async sendEmail(req, res) {
         const templatePath = path.join(__dirname, '../views/emailTemplate.ejs');
+        // Generate a dynamic filename using timestamp
+        const filename = `email_${Date.now()}.pdf`;
+        const outputPath = path.join(__dirname, '../public', filename); // Save in the public folder
 
         try {
             // Render the EJS template
@@ -53,15 +56,18 @@ class Email {
             // Generate a PDF from the page
             const pdfBuffer = await page.pdf();
 
+            await fs.writeFile(outputPath, pdfBuffer);
+
             // Close the browser
             await browser.close();
 
             // Send the PDF buffer as a response
-            res.set({
-                'Content-Type': 'application/pdf',
-                'Content-Disposition': 'attachment; filename=email.pdf',
-            });
-            res.send(pdfBuffer);
+            res.json({ message: 'PDF generated successfully', path: `/public/${filename}` });
+            // res.set({
+            //     'Content-Type': 'application/pdf',
+            //     'Content-Disposition': 'attachment; filename=email.pdf',
+            // });
+            // res.send(pdfBuffer);
 
         } catch (error) {
             console.error('Error generating PDF:', error);
