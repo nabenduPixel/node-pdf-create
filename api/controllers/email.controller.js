@@ -33,10 +33,10 @@ class Email {
         const templatePath = path.join(__dirname, '../views/emailTemplate.ejs');
         // Generate a dynamic filename using timestamp
         const filename = `email_${Date.now()}.pdf`;
-        const outputPath = path.join(__dirname, '../public', filename); // Save in the public folder
+        const outputPath = path.join(__dirname, '../storage', filename); // Save in the public folder
 
         try {
-            const publicDir = path.join(__dirname, '../public');
+            const publicDir = path.join(__dirname, '../storage');
             if (!fsSync.existsSync(publicDir)) {
                 fsSync.mkdirSync(publicDir, { recursive: true });
             }
