@@ -34,11 +34,10 @@ class Email {
         // Generate a dynamic filename using timestamp
         const filename = `email_${Date.now()}.pdf`;
         const outputPath = path.join(__dirname, '../storage', filename); // Save in the public folder
-
         try {
-            const publicDir = path.join(__dirname, '../storage');
-            if (!fsSync.existsSync(publicDir)) {
-                fsSync.mkdirSync(publicDir, { recursive: true });
+            const storageDir = path.join(__dirname, '../storage');
+            if (!fsSync.existsSync(storageDir)) {
+                fsSync.mkdirSync(storageDir, { recursive: true });
             }
             // Render the EJS template
             const html = await ejs.renderFile(templatePath);
@@ -51,10 +50,9 @@ class Email {
                 headless: chromium.headless,
                 ignoreHTTPSErrors: true,
             });
-
+            
             // Create a new page in the browser
             const page = await browser.newPage();
-
             // Set the page content to the rendered HTML
             await page.setContent(html, { waitUntil: 'networkidle0' });
 
@@ -67,7 +65,7 @@ class Email {
             await browser.close();
 
             // Send the PDF buffer as a response
-            res.json({ message: 'PDF generated successfully', path: `/public/${filename}` });
+            res.json({ message: 'PDF generated successfully', path: `/storage/${filename}` });
             
 
         } catch (error) {
