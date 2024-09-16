@@ -72,8 +72,8 @@ class Email {
 
                 const mailOptions = {
                     from: process.env.MAIL_USERNAME,
-                    to: toEmail,
-                    subject: subject,
+                    to: "nabendu.bose@pixelconsultancy.in",
+                    subject: "bookingconfirmation",
                     html: `<!DOCTYPE html>
                         <html lang="en">
                         <head>
