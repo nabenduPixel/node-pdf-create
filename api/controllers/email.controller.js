@@ -4,6 +4,7 @@ const chromium = require("@sparticuz/chromium");
 const puppeteer = require("puppeteer-core");
 let ejs = require("ejs");
 const fsSync = require("fs");
+const nodemailer = require('nodemailer');
 // const chromium = require('chrome-aws-lambda'); // chrome-aws-lambda@10.1.0
 // const puppeteer = require('puppeteer-core');   // puppeteer-core@^10.1.0
 // const ejs = require('ejs');
@@ -40,39 +41,86 @@ class Email {
     async sendEmail(req, res) {
         const templatePath = path.join(__dirname, '../views/emailTemplate.ejs');
         const html = await ejs.renderFile(templatePath);
-    
+
         try {
-            const browser = await puppeteer.launch({
-                args: chromium.args,
-                defaultViewport: chromium.defaultViewport,
-                executablePath: await chromium.executablePath(),
-                headless: chromium.headless,
-                ignoreHTTPSErrors: true,
-            });
-    
-            const page = await browser.newPage();
-            await page.setContent(html, { waitUntil: 'networkidle0' });
-    
-            // Generate PDF
-            const pdfBuffer = await page.pdf();
-            await browser.close();
-    
+            const emailGetway = process.env.EMAIL_GETWAY;
+            if (emailGetway) {
+                const transporter = nodemailer.createTransport({
+                    service: process.env.MAIL_HOST,
+                    host: process.env.MAIL_HOST,
+                    port: process.env.EMAIL_PORT,
+                    auth: {
+                        user: process.env.MAIL_USERNAME,
+                        pass: process.env.MAIL_PASSWORD
+                    }
+                });
+
+                const browser = await puppeteer.launch({
+                    args: chromium.args,
+                    defaultViewport: chromium.defaultViewport,
+                    executablePath: await chromium.executablePath(),
+                    headless: chromium.headless,
+                    ignoreHTTPSErrors: true,
+                });
+
+                const page = await browser.newPage();
+                await page.setContent(html, { waitUntil: 'networkidle0' });
+
+                // Generate PDF
+                const pdfBuffer = await page.pdf();
+                await browser.close();
+
+                const mailOptions = {
+                    from: process.env.MAIL_USERNAME,
+                    to: toEmail,
+                    subject: subject,
+                    html: `<!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                            <title>Document</title>
+                        </head>
+                        <body>
+                            
+                        </body>
+                        </html>`,
+                    attachments: [
+                        {
+                            filename: 'bookingconfirmation.pdf',
+                            path: pdfBuffer,
+                            contentType: 'application/pdf'
+                        }
+                    ]
+                };
+
+                transporter.sendMail(mailOptions, (error, info) => {
+                    if (error) {
+                        console.error('Error sending email:', error);
+                    } else {
+                        console.log('Email sent:', info.response);
+                    }
+                });
+            }
+
+
+
             // Set response headers for PDF download
-            res.set({
-                'Content-Type': 'application/pdf',
-                'Content-Disposition': 'attachment; filename="document.pdf"',  // Filename for the downloaded file
-                'Content-Length': pdfBuffer.length
-            });
-    
+            // res.set({
+            //     'Content-Type': 'application/pdf',
+            //     'Content-Disposition': 'attachment; filename="document.pdf"',  // Filename for the downloaded file
+            //     'Content-Length': pdfBuffer.length
+            // });
+
             // Send the PDF buffer for download
-            res.send(pdfBuffer);
-    
+            // res.send(pdfBuffer);
+
         } catch (error) {
             console.error(error);
             res.status(500).send('An error occurred while generating the PDF');
         }
     }
-    
+
 
     async sendEmailOld(req, res) {
         const templatePath = path.resolve(__dirname, '../views/emailTemplate.ejs');
