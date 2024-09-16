@@ -14,9 +14,33 @@ const fsSync = require("fs");
 class Email {
 
 
-    async sendEmail(req,res) {
+    // async sendEmail(req,res) {
+    //     const templatePath = path.join(__dirname, '../views/emailTemplate.ejs');
+    //     const html = await ejs.renderFile(templatePath);
+    //     try {
+    //         const browser = await puppeteer.launch({
+    //             args: chromium.args,
+    //             defaultViewport: chromium.defaultViewport,
+    //             executablePath: await chromium.executablePath(),
+    //             headless: chromium.headless,
+    //             ignoreHTTPSErrors: true,
+    //         });
+    //         const page = await browser.newPage();
+    //         await page.setContent(html, { waitUntil: 'networkidle0' });
+    //         const pdfBuffer = await page.pdf();
+    //         await browser.close();
+    //         res.send(pdfBuffer);
+
+    //     } catch (error) {
+    //         console.error(error);
+    //         res.send(error);
+    //     }
+    // }
+
+    async sendEmail(req, res) {
         const templatePath = path.join(__dirname, '../views/emailTemplate.ejs');
         const html = await ejs.renderFile(templatePath);
+    
         try {
             const browser = await puppeteer.launch({
                 args: chromium.args,
@@ -25,17 +49,30 @@ class Email {
                 headless: chromium.headless,
                 ignoreHTTPSErrors: true,
             });
+    
             const page = await browser.newPage();
             await page.setContent(html, { waitUntil: 'networkidle0' });
+    
+            // Generate PDF
             const pdfBuffer = await page.pdf();
             await browser.close();
+    
+            // Set response headers for PDF download
+            res.set({
+                'Content-Type': 'application/pdf',
+                'Content-Disposition': 'attachment; filename="document.pdf"',  // Filename for the downloaded file
+                'Content-Length': pdfBuffer.length
+            });
+    
+            // Send the PDF buffer for download
             res.send(pdfBuffer);
-
+    
         } catch (error) {
             console.error(error);
-            res.send(error);
+            res.status(500).send('An error occurred while generating the PDF');
         }
     }
+    
 
     async sendEmailOld(req, res) {
         const templatePath = path.resolve(__dirname, '../views/emailTemplate.ejs');
