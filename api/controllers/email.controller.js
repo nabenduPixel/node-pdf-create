@@ -43,84 +43,60 @@ class Email {
         const html = await ejs.renderFile(templatePath);
 
         try {
-            const emailGetway = process.env.EMAIL_GETWAY;
-            if (emailGetway) {
-                const transporter = nodemailer.createTransport({
-                    service: process.env.MAIL_HOST,
-                    host: process.env.MAIL_HOST,
-                    port: process.env.EMAIL_PORT,
-                    auth: {
-                        user: process.env.MAIL_USERNAME,
-                        pass: process.env.MAIL_PASSWORD
+            const transporter = nodemailer.createTransport({
+                service: process.env.MAIL_HOST,
+                host: process.env.MAIL_HOST,
+                port: process.env.EMAIL_PORT,
+                auth: {
+                    user: process.env.MAIL_USERNAME,
+                    pass: process.env.MAIL_PASSWORD
+                }
+            });
+
+            const browser = await puppeteer.launch({
+                args: chromium.args,
+                defaultViewport: chromium.defaultViewport,
+                executablePath: await chromium.executablePath(),
+                headless: chromium.headless,
+                ignoreHTTPSErrors: true,
+            });
+
+            const page = await browser.newPage();
+            await page.setContent(html, { waitUntil: 'networkidle0' });
+
+            // Generate PDF
+            const pdfBuffer = await page.pdf();
+            await browser.close();
+
+            const mailOptions = {
+                from: process.env.MAIL_USERNAME,
+                to: "recipient@example.com",
+                subject: "Booking Confirmation",
+                html: `<p>Here is your booking confirmation.</p>`,
+                attachments: [
+                    {
+                        filename: 'bookingconfirmation.pdf',
+                        content: pdfBuffer,
+                        contentType: 'application/pdf'
                     }
-                });
+                ]
+            };
 
-                const browser = await puppeteer.launch({
-                    args: chromium.args,
-                    defaultViewport: chromium.defaultViewport,
-                    executablePath: await chromium.executablePath(),
-                    headless: chromium.headless,
-                    ignoreHTTPSErrors: true,
-                });
-
-                const page = await browser.newPage();
-                await page.setContent(html, { waitUntil: 'networkidle0' });
-
-                // Generate PDF
-                const pdfBuffer = await page.pdf();
-                await browser.close();
-
-                const mailOptions = {
-                    from: process.env.MAIL_USERNAME,
-                    to: "nabendu.bose@pixelconsultancy.in",
-                    subject: "bookingconfirmation",
-                    html: `<!DOCTYPE html>
-                        <html lang="en">
-                        <head>
-                            <meta charset="UTF-8">
-                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                            <title>Document</title>
-                        </head>
-                        <body>
-                            
-                        </body>
-                        </html>`,
-                    attachments: [
-                        {
-                            filename: 'bookingconfirmation.pdf',
-                            path: pdfBuffer,
-                            contentType: 'application/pdf'
-                        }
-                    ]
-                };
-
-                transporter.sendMail(mailOptions, (error, info) => {
-                    if (error) {
-                        console.error('Error sending email:', error);
-                    } else {
-                        console.log('Email sent:', info.response);
-                    }
-                });
-            }
-
-
-
-            // Set response headers for PDF download
-            // res.set({
-            //     'Content-Type': 'application/pdf',
-            //     'Content-Disposition': 'attachment; filename="document.pdf"',  // Filename for the downloaded file
-            //     'Content-Length': pdfBuffer.length
-            // });
-
-            // Send the PDF buffer for download
-            // res.send(pdfBuffer);
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    console.error('Error sending email:', error);
+                    res.status(500).send('Error sending email');
+                } else {
+                    console.log('Email sent:', info.response);
+                    res.status(200).send('Email sent successfully');
+                }
+            });
 
         } catch (error) {
             console.error(error);
             res.status(500).send('An error occurred while generating the PDF');
         }
     }
-
 
     async sendEmailOld(req, res) {
         const templatePath = path.resolve(__dirname, '../views/emailTemplate.ejs');
