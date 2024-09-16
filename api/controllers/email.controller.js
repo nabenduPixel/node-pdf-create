@@ -14,7 +14,7 @@ const fsSync = require("fs");
 class Email {
 
 
-    async sendEmailnew(req,res) {
+    async sendEmail(req,res) {
         const templatePath = path.join(__dirname, '../views/emailTemplate.ejs');
         const html = await ejs.renderFile(templatePath);
         try {
@@ -41,7 +41,7 @@ class Email {
 
 
 
-    async sendEmail(req, res) {
+    async sendEmailOld(req, res) {
         const templatePath = path.resolve(__dirname, '../views/emailTemplate.ejs');
         const filename = `email_${Date.now()}.pdf`;
         const storageDir = path.resolve(__dirname, '../storage');
@@ -72,6 +72,9 @@ class Email {
             res.status(500).send('An error occurred while generating the PDF.');
         }
     }
+
+
+
 
     // async sendEmail(req, res) {
     //     const templatePath = path.resolve(__dirname, '../views/emailTemplate.ejs');
