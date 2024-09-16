@@ -70,7 +70,7 @@ class Email {
 
             const mailOptions = {
                 from: process.env.MAIL_USERNAME,
-                to: "recipient@example.com",
+                to: "nabendu.bose@pixelconsultancy.in",
                 subject: "Booking Confirmation",
                 html: `<p>Here is your booking confirmation.</p>`,
                 attachments: [
