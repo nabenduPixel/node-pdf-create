@@ -2,6 +2,7 @@
 const path = require("path");
 const chromium = require("@sparticuz/chromium");
 const puppeteer = require("puppeteer-core");
+// const puppeteer = require('puppeteer');
 let ejs = require("ejs");
 // const fsSync = require("fs");
 const nodemailer = require('nodemailer');
@@ -54,12 +55,19 @@ class Email {
                 headless: chromium.headless,
                 ignoreHTTPSErrors: true,
             });
+            // const browser = await puppeteer.launch({
+            //     args: ['--no-sandbox', '--disable-setuid-sandbox'],
+            //     headless: true,
+            // });
 
             const page = await browser.newPage();
             await page.setContent(html, { waitUntil: 'networkidle0' });
 
             // Generate PDF
-            const pdfBuffer = await page.pdf();
+            const pdfBuffer = await page.pdf({
+                format: "A4",
+                printBackground: true
+            });
             await browser.close();
 
             const mailOptions = {
